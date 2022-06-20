@@ -53,11 +53,11 @@ database()
 help()
 {
    # Display Help
-   echo "Syntax: scriptTemplate [-p|h|r]"
-   echo "options:"
+   echo "SYNOPSIS: scriptTemplate [-p|h|r]"
+   echo "OPTIONS:"
    echo "p     Prefix for secret"
    echo "h     Print this Help."
-   echo "r     Specify a aws region"
+   echo "r     Specify a aws region. Default ap-southeast-1"
    echo
 }
 
