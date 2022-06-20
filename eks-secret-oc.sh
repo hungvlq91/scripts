@@ -53,11 +53,9 @@ database()
 help()
 {
    # Display Help
-   echo "Add description of the script functions here."
-   echo
    echo "Syntax: scriptTemplate [-p|h|r]"
    echo "options:"
-   echo "p     Master prefix for secret"
+   echo "p     Prefix for secret"
    echo "h     Print this Help."
    echo "r     Specify a aws region"
    echo
@@ -65,24 +63,26 @@ help()
 
 ## MAIN ##
 
-############################################################
-# Process the input options. Add options as needed.        #
-############################################################
+###########################################################
+#Process the input options. Add options as needed.        #
+###########################################################
 # Get the options
-while getopts ":hnr:" option; do
+REGION="ap-southeast-1"
+while getopts ":hpr:" option; do
    case $option in
-      h) # display Help
-         help
-         exit;;
-      n) # Enter a name
-         Name=$OPTARG;;
-     \?) # Invalid option
-         echo "Error: Invalid option"
-         exit;;
+        h) # display Help
+            help
+            exit;;
+        p) # Enter a name
+            MASTER_PREFIX=$OPTARG;;
+        r) # Enter a name
+            REGION=$OPTARG;;
+        \?) # Invalid option
+            echo "Error: Invalid option"
+            exit;;
    esac
 done
 
-MASTER_PREFIX=$1
 if [ ! -z "$MASTER_PREFIX" ]; then
     OPTIONS=("GIT" "HELM" "REGISTY" "LDAP" "DATABASE" "QUIT")
     select opt in "${OPTIONS[@]}"
@@ -92,6 +92,7 @@ if [ ! -z "$MASTER_PREFIX" ]; then
                 echo "FUNCTION CREATE SECRET FOR GIT"
                 read -p 'Username: ' USERNAME
                 read -sp 'Password: ' PASSWORD
+                echo ""
                 read -p 'Repo URL: ' REPO_URL
                 git;
                 # break
@@ -100,6 +101,7 @@ if [ ! -z "$MASTER_PREFIX" ]; then
                 echo "FUNCTION CREATE SECRET FOR HELM"
                 read -p 'Username: ' USERNAME
                 read -sp 'Password: ' PASSWORD
+                echo ""
                 read -p 'Repo URL: ' REPO_URL
                 helm;
                 # break
@@ -108,6 +110,7 @@ if [ ! -z "$MASTER_PREFIX" ]; then
                 echo "FUNCTION CREATE SECRET FOR REGISTY"
                 read -p 'Username: ' USERNAME
                 read -sp 'Password: ' PASSWORD
+                echo ""
                 read -p 'Registry URL: ' REGISTRY
                 registry;
                 # break
@@ -123,7 +126,7 @@ if [ ! -z "$MASTER_PREFIX" ]; then
                 echo "FUNCTION CREATE SECRET FOR DATABASE"
                 read -p 'Username: ' USERNAME
                 read -sp 'Password: ' PASSWORD
-                ldap;
+                database;
                 # break
                 ;;
             "QUIT")
