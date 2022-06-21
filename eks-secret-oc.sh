@@ -4,7 +4,7 @@ git()
 {
     if [[ ! -z "$NAME" && ! -z "$USERNAME" && ! -z "$USERNAME" && ! -z "$PASSWORD" && ! -z "$REPO_URL" ]]; then
         aws secretsmanager create-secret \
-            --name "$MASTER_PREFIX/$NAME" \
+            --name "$MASTER_PREFIX/git/$NAME" --region $REGION \
             --description "git-user secret created with the CLI." \
             --secret-string "{\"username\":\"$USERNAME\",\"password\":\"$PASSWORD\", \"repository\":\"$REPO_URL\"}"
     fi
@@ -14,7 +14,7 @@ helm()
 {
     if [[ ! -z "$NAME" && ! -z "$USERNAME" && ! -z "$PASSWORD" && ! -z "$REPO_URL" ]]; then
         aws secretsmanager create-secret \
-            --name "$MASTER_PREFIX/$NAME" \
+            --name "$MASTER_PREFIX/helm/$NAME" --region $REGION \
             --description "helm-repo secret created with the CLI." \
             --secret-string "{\"username\":\"$USERNAME\",\"password\":\"$PASSWORD\", \"repository\":\"$REPO_URL\"}"
     fi
@@ -24,7 +24,7 @@ registry()
 {
     if [[ ! -z "$NAME" && ! -z "$USERNAME" && ! -z "$PASSWORD" && ! -z "$REGISTRY" ]]; then
         aws secretsmanager create-secret \
-            --name "$MASTER_PREFIX/$NAME" \
+            --name "$MASTER_PREFIX/registry/$NAME" --region $REGION \
             --description "registry-user secret created with the CLI." \
             --secret-string "{\"username\":\"$USERNAME\",\"password\":\"$PASSWORD\", \"registry\":\"$REGISTRY\"}"
     fi
@@ -34,7 +34,7 @@ ldap()
 {
     if [[ ! -z "$NAME" && ! -z "$BIND_DN" && ! -z "$BIND_PW" ]]; then
         aws secretsmanager create-secret \
-            --name "$MASTER_PREFIX/$NAME" \
+            --name "$MASTER_PREFIX/ldap/$NAME" --region $REGION \
             --description "ldap-config secret created with the CLI." \
             --secret-string "{\"bindDN\":\"$BIND_DN\",\"bindPW\":\"$BIND_PW\"}"
     fi
@@ -44,21 +44,27 @@ database()
 {
     if [[ ! -z "$NAME" && ! -z "$USERNAME" && ! -z "$PASSWORD" ]]; then
         aws secretsmanager create-secret \
-            --name "$MASTER_PREFIX/$NAME" \
+            --name "$MASTER_PREFIX/database/$NAME" --region $REGION \
             --description "database-config secret created with the CLI." \
             --secret-string "{\"username\":\"$USERNAME\",\"password\":\"$PASSWORD\"}"
     fi
 }
 
+
 help()
 {
-   # Display Help
-   echo "SYNOPSIS: scriptTemplate [-p|h|r]"
-   echo "OPTIONS:"
-   echo "p     Prefix for secret"
-   echo "h     Print this Help."
-   echo "r     Specify a aws region. Default ap-southeast-1"
-   echo
+    cat <<EOF
+Decription:
+    Create secrets on AWS secret manager to use in modules terraform.
+
+Synosis:
+    eks-secret-oc.sh -p PREFIX [-r <REGION>]
+ 
+Options:
+    -p PREFIX      Specify a prefix for secret.
+    -r REGION      Specify a aws region. Default ap-southeast-1.
+    -h HELP        Print this Help.
+EOF
 }
 
 ## MAIN ##
@@ -68,7 +74,7 @@ help()
 ###########################################################
 # Get the options
 REGION="ap-southeast-1"
-while getopts ":hpr:" option; do
+while getopts ":hr:p:" option; do
    case $option in
         h) # display Help
             help
@@ -78,11 +84,13 @@ while getopts ":hpr:" option; do
         r) # Enter a name
             REGION=$OPTARG;;
         \?) # Invalid option
-            echo "Error: Invalid option"
+            echo "ERROR: INVALID OPTION"
             exit;;
    esac
 done
-
+echo $MASTER_PREFIX
+echo $REGION
+exit
 if [ ! -z "$MASTER_PREFIX" ]; then
     OPTIONS=("GIT" "HELM" "REGISTY" "LDAP" "DATABASE" "QUIT")
     select opt in "${OPTIONS[@]}"
@@ -90,51 +98,56 @@ if [ ! -z "$MASTER_PREFIX" ]; then
         case $opt in
             "GIT")
                 echo "FUNCTION CREATE SECRET FOR GIT"
-                read -p 'Username: ' USERNAME
-                read -sp 'Password: ' PASSWORD
+                read -p 'SECRET NAME: ' NAME
+                read -p 'USERNAME: ' USERNAME
+                read -sp 'PASSWORD: ' PASSWORD
                 echo ""
-                read -p 'Repo URL: ' REPO_URL
+                read -p 'REPO URL: ' REPO_URL
                 git;
                 # break
                 ;;
             "HELM")
                 echo "FUNCTION CREATE SECRET FOR HELM"
-                read -p 'Username: ' USERNAME
-                read -sp 'Password: ' PASSWORD
+                read -p 'SECRET NAME: ' NAME
+                read -p 'USERNAME: ' USERNAME
+                read -sp 'PASSWORD: ' PASSWORD
                 echo ""
-                read -p 'Repo URL: ' REPO_URL
+                read -p 'REPO URL: ' REPO_URL
                 helm;
                 # break
                 ;;
             "REGISTY")
                 echo "FUNCTION CREATE SECRET FOR REGISTY"
-                read -p 'Username: ' USERNAME
-                read -sp 'Password: ' PASSWORD
+                read -p 'SECRET NAME: ' NAME
+                read -p 'USERNAME: ' USERNAME
+                read -sp 'PASSWORD: ' PASSWORD
                 echo ""
-                read -p 'Registry URL: ' REGISTRY
+                read -p 'REGISTRY URL: ' REGISTRY
                 registry;
                 # break
                 ;;
             "LDAP")
                 echo "FUNCTION CREATE SECRET FOR LDAP"
-                read -p 'Username: ' BIND_DN
-                read -sp 'Password: ' BIND_PW
+                read -p 'SECRET NAME: ' NAME
+                read -p 'LDAP USERNAME: ' BIND_DN
+                read -sp 'LDAP PASSWORD: ' BIND_PW
                 ldap;
                 # break
                 ;;
             "DATABASE")
                 echo "FUNCTION CREATE SECRET FOR DATABASE"
-                read -p 'Username: ' USERNAME
-                read -sp 'Password: ' PASSWORD
+                read -p 'SECRET NAME: ' NAME
+                read -p 'USERNAME: ' USERNAME
+                read -sp 'PASSWORD: ' PASSWORD
                 database;
                 # break
                 ;;
             "QUIT")
                 break
                 ;;
-            *) echo "invalid option $REPLY";;
+            *) echo "INVALID OPTION $REPLY";;
         esac
     done
 else
-echo "MASTER PREFIX IS REQUIRED"
+    echo "MASTER PREFIX IS REQUIRED"
 fi
